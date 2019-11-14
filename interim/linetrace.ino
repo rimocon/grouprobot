@@ -22,13 +22,13 @@ void linetrace_P(){
   static float speed = 200;
   static float Kp = 1.8;//P制御の比例定数
   static float Ki = 0.3;//I制御の比例定数
-  static float Kd = 1.8;//D制御の比例定数
+  static float Kd = 1.0;//D制御の比例定数
   float lightNow;
   float speedDiff;
 
   lightNow = (red_G + green_G + blue_G) / 3.0;//赤と緑と青のセンサの値の平均値を取る
-  //speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
-  speedDiff = map(blue_G,0,255,-speed,speed);
+  speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
+  //speedDiff = map(blue_G,0,255,-speed,speed);
   Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
   
   motorL_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
@@ -58,10 +58,10 @@ void task_A()
         stop_period = 500; // 後で停止する期間
         mode_G = 2;
       }
-      //else if ( color == 'C') { // cyan
-      //  stop_period = 1500;
-      //  mode_G = 2;
-      //}
+      else if ( color == 'C') { // cyan
+        stop_period = 1500;
+        mode_G = 2;
+      }
       break;
 
     case 2:
@@ -120,7 +120,7 @@ void task_B(){
       }
       break;
     case 3:
-      //linetrace_P(); // ライントレース
+      linetrace_P(); // ライントレース
       motors.setSpeeds(0,0);
       if(timeNow_G - startTime > 1000){
         countR = 0;
@@ -136,7 +136,7 @@ void task_B(){
       startTime = timeNow_G;
       mode_G = 6;
     case 6:
-      //linetrace_P();//ライントレース
+      linetrace_P();//ライントレース
       motors.setSpeeds(0,0);
       if(timeNow_G - startTime > 10){
         mode_G = 2;

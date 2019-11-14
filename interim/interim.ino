@@ -51,7 +51,7 @@ void loop()
   //linetrace_bang_bang(); // ライントレース（bang-bang制御）
   avoidance();
   linetrace_P();
-  task_B();
+  task_A();
   if(button.isPressed()){//Zumoボタンが押されたら
     mode_G = 0;
     motors.setSpeeds(0,0);
