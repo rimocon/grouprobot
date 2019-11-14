@@ -19,23 +19,27 @@ void linetrace_bang_bang()
 void linetrace_P(){
   static float lightMin = 0;
   static float lightMax = 255;
-  static float speed = 200; //200 kp1.7 kd0.8で振動なし
-  static float Kp = 1.7; //P制御の比例定数
+  static float speed = 250; //
+  static float Kp = 1.8; //P制御の比例定数
   static float Ki = 0.3; //I制御の比例定数
-  static float Kd = 0.8; //D制御の比例定数
-  
+  static float Kd = 1.8; //D制御の比例定数
+
+  //speed 250,Kp1.8,Ki0.3,Kd1.8で安定
   float lightNow;
   float Diff; //偏差
   
   lightNow = (red_G + green_G + blue_G ) / 3.0; //赤と緑と青のセンサの値の平均値を取る
-  Diff = map(lightNow,lightMin,lightMax,-speed,speed); //lightNowの値に応じてDiffを変更(白黒ライントレース)
-  //Diff = map(green_G,lightMin,dataG_max,-speed,speed); //green_Gの値に応じてDiffを変更(緑色ライントレース)
-  //Diff = map(blue_G,lightMin,dataB_max,-speed,speed); //blue_Gの値に応じてDiffを変更(青色ライントレース)
+  //Diff = map(lightNow,lightMin,lightMax,-speed,speed); //lightNowの値に応じてDiffを変更(白黒ライントレース)
+  //Diff = map(green_G,dataG_min,dataG_max,-speed,speed); //green_Gの値に応じてDiffを変更(緑色ライントレース)
+  Diff = map(blue_G,0,255,-speed,speed); //blue_Gの値に応じてDiffを変更(青色ライントレース)
   Diff_sum += Diff; //現在の偏差を偏差の累積値として足す
-  
+  /*右側トレース
   motorL_G = speed - Kp*Diff;  - Ki*Diff_sum - Kd*(Diff - Diff_bef); //PID制御
   motorR_G = speed + Kp*Diff;  + Ki*Diff_sum + Kd*(Diff - Diff_bef); //PID制御
-  Diff = Diff_bef; //現在の偏差を前回の値として格納
+  */
+  motorR_G = speed - Kp*Diff;  - Ki*Diff_sum - Kd*(Diff - Diff_bef); //PID制御
+  motorL_G = speed + Kp*Diff;  + Ki*Diff_sum + Kd*(Diff - Diff_bef); //PID制御
+  Diff_bef = Diff; //現在の偏差を前回の値として格納
 }
 
 
