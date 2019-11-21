@@ -49,9 +49,8 @@ void loop()
   readRGB(); // カラーセンサでRGB値を取得(0-255)
   timeNow_G = millis() - timeInit_G; // 経過時間
   //linetrace_bang_bang(); // ライントレース（bang-bang制御）
-  linetrace_P();
-  avoidance();
   task_B();
+  avoidance();
   if(button.isPressed()){//Zumoボタンが押されたら
     mode_G = 0;
     motors.setSpeeds(0,0);
