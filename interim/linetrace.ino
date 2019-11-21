@@ -1,21 +1,3 @@
-void linetrace_bang_bang()
-{
-  static float lightMin = 0; // 各自で設定
-  static float lightMax = 255; // 各自で設定
-  static float speed = 100; // パラメーター
-  static float Kp = 2.0; // パラメーター
-  float lightNow;
-  float speedDiff;
-
-  lightNow = (red_G + green_G + blue_G ) / 3.0;
-  if ( lightNow < (lightMin + lightMax) / 2.0 ) // 右回転
-    speedDiff = -Kp * speed;
-  else // 左回転
-    speedDiff = Kp * speed;
-  motorL_G = speed - speedDiff;
-  motorR_G = speed + speedDiff;
-}
-
 void linetrace_P(){
   static float lightMin = 0;
   static float lightMax = 255;
@@ -87,11 +69,11 @@ void task_B(){
   char color;
 
   switch ( mode_G ) {
-    case 0:
+    case 0://待機モード
       mode_G = 1;
       break;  // break文を忘れない（忘れるとその下も実行される）
 
-    case 1:
+    case 1://通常走行
       linetrace_P(); // ライントレース（各自で作成）
       color = identify_RGB(); // ラインの色を推定(R:赤，G:緑，B:青，-:それ以外）
       if ( color == 'R' ) { // red
@@ -104,22 +86,22 @@ void task_B(){
       }
       break;
 
-    case 2:
+    case 2://赤、緑を検出
       linetrace_P(); // ライントレース
       if ( identify_RGB() == 'B' ) { // brue
         startTime = timeNow_G; // mode_G=3に遷移した時刻を記録
-        if(countR < 2){
+        if(countR < 2){//再度通常走行
           mode_G = 1;
         }
-        if(countR >= 2 &&countG < 1){
+        if(countR >= 2 &&countG < 1){//交差点
           mode_G = 3;
         }
-        if(countR >= 2 &&countG >=1){
+        if(countR >= 2 &&countG >=1){//ゾーンに入った
           mode_G = 4;
         }
       }
       break;
-    case 3:
+    case 3://交差点
       linetrace_P(); // ライントレース
       motors.setSpeeds(0,0);
       if(timeNow_G - startTime > 1000){
@@ -127,86 +109,29 @@ void task_B(){
         mode_G = 1;
       }
       break;
-    case 4:
-      countR = 0;
-      countG = 0;
-      mode_G = 1;
+    case 4://各ゾーンでの行動
+      motors.setSpeeds(200,-200);//右回転
+      if(timeNow_G - startTime >500){
+        motors.setSpeeds(-200,200);//左回転
+        if(timeNow_G - startTime > 1500){
+          motors.setSpeeds(200,-200);//右回転
+          if(timeNow_G - startTime > 2000){
+            countR = 0;
+            countG = 0;
+            mode_G = 1;
+          }
+        }
+      }
       break;
-    case 5:
+    case 5://時間を取得
       startTime = timeNow_G;
       mode_G = 6;
-    case 6:
+    case 6://衝突回避
       linetrace_P();//ライントレース
       motors.setSpeeds(0,0);
       if(timeNow_G - startTime > 10){
         mode_G = 2;
       }
-      break;
-    
-  }
-}
-
-void task_C(){
-  static int stop_period; // static変数であることに注意
-  static unsigned long startTime; // static変数，時間計測ははunsigned long
-  char color;
-
-  switch ( mode_G ) {
-    case 0:
-      mode_G = 1;
-      break;  // break文を忘れない（忘れるとその下も実行される）
-
-    case 1:
-      linetrace_P(); // ライントレース（各自で作成）
-      color = identify_RGB(); // ラインの色を推定(R:赤，G:緑，B:青，-:それ以外）
-      if ( color == 'R' ) { // red
-        countR++;
-        mode_G = 2;
-      }
-      else if ( color == 'B' && countR > 0) { // green
-        countG++;
-        mode_G = 2;
-      }
-      break;
-
-    case 2:
-      linetrace_P(); // ライントレース
-      if ( identify_RGB() == 'G' ) { // brue
-        startTime = timeNow_G; // mode_G=3に遷移した時刻を記録
-        if(countR < 2){
-          mode_G = 1;
-        }
-        if(countR >= 2 &&countG < 1){
-          mode_G = 3;
-        }
-        if(countR >= 2 &&countG >=1){
-          mode_G = 4;
-        }
-      }
-      break;
-    case 3:
-      linetrace_P(); // ライントレース
-      motors.setSpeeds(100,100);
-      /*if(identify_RGB() == 'C'){
-        countR = 0;
-        mode_G = 4;
-      }else */if(timeNow_G - startTime > 5000){
-        countR = 0;
-        mode_G = 1;
-      }
-      break;
-    case 4:
-      linetrace_P();//ライントレース
-      motors.setSpeeds(150,150);
-      if(identify_RGB() == 'G'){
-        countR = 0;
-        mode_G = 1;
-      }
-      break;
-    case 5:
-      countR = 0;
-      countG = 0;
-      mode_G = 1;
       break;
     
   }
