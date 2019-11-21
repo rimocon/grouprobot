@@ -28,10 +28,10 @@ void setup() {
    count_mode = 1;
   port1 = new Serial(this, "/dev/cu.usbserial-A90177EP", 9600); //Serial クラスのインスタンスを生成
   port1.clear();
-  port1.bufferUntil(0x0d);                                      // LF = 0x0d までバッファ
-  port2 = new Serial(this, "/dev/cu.usbserial-AE017IBX", 9600); //Serial クラスのインスタンスを生成
-  port2.clear();
-  port2.bufferUntil(0x0d);                                      // LF = 0x0d までバッファ
+  //port1.bufferUntil(0x0d);                                      // LF = 0x0d までバッファ
+  //port2 = new Serial(this, "/dev/ttyUSB1", 9600); //Serial クラスのインスタンスを生成
+  //port2.clear();
+  //port2.bufferUntil(0x0d);                                      // LF = 0x0d までバッファ
   //port3 = new Serial(this, "/dev/ttyUSB2", 9600); //Serial クラスのインスタンスを生成
   //port3.clear();
   //port3.bufferUntil(0x0d);                                      // LF = 0x0d までバッファ
@@ -144,23 +144,16 @@ void drawText(){
   textSize(50);                                                  //文字の大きさを 20 に 
   //println(n_zumo);
   if(n_zumo == 1){
-    text("Zumo1",200,100);
+    text("Zumo1",1200,500);
   }
   else if(n_zumo == 2){
-    text("Zumo2",200,100);
+    text("Zumo2",1200,500);
   }
   else if(n_zumo == 3){
-    text("Zumo3",200,100);
+    text("Zumo3",1200,500);
   }
-  
-  if(motorL_G > 0 || motorR_G > 0)
-    text("RUN",200,150);
-  else
-    text("STOP",200,150);
-  
-  text("mode:"+mode_G,200,200);
-  
    textSize(20);  
+  
   popMatrix(); //座標軸の位置をスタックから取り出すし設定する ... この場合(0, 0)
 }
 
@@ -185,7 +178,7 @@ void serialEvent(Serial p) {
       
       if(mode_G == 99){                    // 現在動作中Zumoの動作が終了したら
         n_zumo++;                              //次のZumoへ移行
-        if(n_zumo > 2) n_zumo = 1;
+        if(n_zumo > 3) n_zumo = 1;
       }
       sendZumoData();
       p.clear(); //念の為クリア
@@ -198,10 +191,10 @@ void serialEvent(Serial p) {
 }
 
 void sendZumoData(){
-  port1.write('H');            //port1に’H'を送信
-  port1.write(n_zumo);  //port1にn_zumoの内容を送信
-  port2.write('H');           //port2に’H'を送信
-  port2.write(n_zumo); //port2にn_zumoの内容を送信
+  //port1.write('H');            //port1に’H'を送信
+  //port1.write(n_zumo);  //port1にn_zumoの内容を送信
+  //port2.write('H');           //port2に’H'を送信
+  //port2.write(n_zumo); //port2にn_zumoの内容を送信
   //port3.write('H');          //port3に’H'を送信
   //port3.write(n_zumo); //port3にn_zumoの内容を送信
 }

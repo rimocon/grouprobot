@@ -1,7 +1,7 @@
 void linetrace_P(){
   static float lightMin = 0;
   static float lightMax = 255;
-  static float speed = 250; //
+  static float speed = 200; //
   static float Kp = 1.8; //P制御の比例定数
   static float Ki = 0.3; //I制御の比例定数
   static float Kd = 1.8; //D制御の比例定数
@@ -50,6 +50,9 @@ void task_A()
         stop_period = 1500;
         mode_G = 2;
       }
+      else if ( color == 'B') { // blue
+        mode_G = 99;
+      }
       break;
 
     case 2:
@@ -89,6 +92,9 @@ void task_B(){
       else if ( color == 'G' && countR > 0) { // green
         countG++;
         mode_G = 2;
+      }
+      else if( color == 'B'){//blue
+        mode_G = 99;
       }
       break;
 
@@ -141,7 +147,15 @@ void task_B(){
         mode_G = 2;
       }
       break;
-    
+    case 98:
+      motorR_G = 0;
+      motorL_G = 0;
+      break;
+    case 99:
+      motorR_G = 0;
+      motorL_G = 0;
+      sendData();
+      break;
   }
 }
 
