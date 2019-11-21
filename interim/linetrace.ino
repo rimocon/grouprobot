@@ -125,7 +125,9 @@ void task_B(){
       break;
     case 5://時間を取得
       startTime = timeNow_G;
+      motors.setSpeeds(0,0);
       mode_G = 6;
+      break;
     case 6://衝突回避
       linetrace_P();//ライントレース
       motors.setSpeeds(0,0);
