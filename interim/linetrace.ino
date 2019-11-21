@@ -23,7 +23,7 @@ void linetrace_P(){
   motorL_G = speed + Kp*Diff;  + Ki*Diff_sum + Kd*(Diff - Diff_bef); //PID制御
   Diff_bef = Diff; //現在の偏差を前回の値として格納
 }
-
+/*
 void task_A()
 {
   static int stop_period; // static変数であることに注意
@@ -71,7 +71,7 @@ void task_A()
       break;
   }
 }
-
+*/
 void task_B(){
   static int stop_period; // static変数であることに注意
   static unsigned long startTime; // static変数，時間計測ははunsigned long
@@ -84,7 +84,12 @@ void task_B(){
 
     case 1://通常走行
       linetrace_P(); // ライントレース（各自で作成）
+      startTime = timeNow_G;
+      if(timeNow_G - startTime > 1000){
+        mode_G = 99;
+      }
       color = identify_RGB(); // ラインの色を推定(R:赤，G:緑，B:青，-:それ以外）
+      
       if ( color == 'R' ) { // red
         countR++;
         mode_G = 2;
@@ -92,9 +97,6 @@ void task_B(){
       else if ( color == 'G' && countR > 0) { // green
         countG++;
         mode_G = 2;
-      }
-      else if( color == 'B'){//blue
-        mode_G = 99;
       }
       break;
 
@@ -155,6 +157,7 @@ void task_B(){
       motorR_G = 0;
       motorL_G = 0;
       sendData();
+      mode_G = 98;
       break;
   }
 }

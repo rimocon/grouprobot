@@ -99,6 +99,7 @@ void loop()
       byte num = Serial.read();//numに受け取った数字を格納
       if(num == ZUMO_NUM)      //送られてきた番号が自分の番号と一致していたら
         mode_G = 0;               //初期mode99からmode0に移行
+        num = 0;
     }
   }
 }
