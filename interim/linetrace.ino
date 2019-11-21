@@ -9,8 +9,8 @@ void linetrace_P(){
   float speedDiff;
 
   lightNow = (red_G + green_G + blue_G) / 3.0;//赤と緑と青のセンサの値の平均値を取る
-  speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
-  //speedDiff = map(blue_G,0,255,-speed,speed);
+  //speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
+  speedDiff = map(blue_G,0,255,-speed,speed);
   Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
   
   motorL_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
