@@ -1,41 +1,63 @@
-//更新日時 10/31/授業中
 
 import processing.serial.*;
 Serial port1;
 Serial port2;
 Serial port3;
-int n_zumo = 1;
+int n_zumo = 99;
 int count=0;
 int count_mode = 0;
-int LF = 10;                                                    // LF（Linefeed）のアスキーコード
+int LF = 10;                     // LF（Linefeed）のアスキーコード
 int height_g, width_g;           // RGBgraphを描画する高さと横幅
 
 int ax = 0, ay = 0, az = 0;
 int mx = 0, my = 0, mz = 0;
 int CX=250, CY=250;
-int mode_G=0;  //
-int red_G=0, green_G=0, blue_G=0, green_p=0, red_p=0, blue_p=0;  //
-int motorR_G=0, motorL_G=0;  //
+
+int[] mode_G  = new int[3];
+int[] zflag   = new int[3];  // 一周終わったら1
+
+int[] red_G   = new int[3];
+int[] green_G = new int[3];
+int[] blue_G  = new int[3];
+int[] red_p   = new int[3];
+int[] green_p = new int[3];
+int[] blue_p  = new int[3];
+
+int[] countR  = new int[3];
+int[] countG  = new int[3];
+int[] countB  = new int[3];
+
+int[] motorR_G  = new int[3];
+int[] motorL_G  = new int[3];
+
+int n;
 
 void setup() {
-   size(1600,1000);
-   width_g = 1200; height_g = width_g/3; 
+   size(1200,800);
+   width_g = 900; height_g = width_g/3; 
    background(255);
    count = 0;
-   red_p = 0; 
-   green_p = 0; 
-   blue_p = 0;
    count_mode = 1;
-  port1 = new Serial(this, "/dev/cu.usbserial-A90177EP", 9600); //Serial クラスのインスタンスを生成
-  port1.clear();
-  port1.bufferUntil(0x0d);                                      // LF = 0x0d までバッファ
-  port2 = new Serial(this, "/dev/cu.usbserial-AE017IBX", 9600); //Serial クラスのインスタンスを生成
-  port2.clear();
-  port2.bufferUntil(0x0d);                                      // LF = 0x0d までバッファ
-  //port3 = new Serial(this, "/dev/ttyUSB2", 9600); //Serial クラスのインスタンスを生成
-  //port3.clear();
-  //port3.bufferUntil(0x0d);                                      // LF = 0x0d までバッファ
-    sendZumoData();
+   n_zumo = 99;
+   
+   // 初期化
+   for(int i=0;i<3;i++){
+     mode_G[i] = 0; zflag[i] = 0;
+     red_G[i] = 0; green_G[i] = 0; blue_G[i] = 0; 
+     red_p[i] = 0; green_p[i] = 0; blue_p[i] = 0; 
+     countR[i] = 0; countG[i] = 0; countB[i] = 0;
+     motorR_G[i] = 0; motorL_G[i] = 0;
+   }
+   
+   //port1 = new Serial(this, "COM3", 9600); //Serial クラスのインスタンスを生成
+   //port1.clear();
+   //port1.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
+   //port2 = new Serial(this, "/dev/ttyUSB1", 9600); //Serial クラスのインスタンスを生成
+   //port2.clear();
+   //port2.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
+   //port3 = new Serial(this, "/dev/ttyUSB2", 9600); //Serial クラスのインスタンスを生成
+   //port3.clear();
+   //port3.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
 }
 
 void line3D(float x0, float y0,float z0,float x1,float y1,float z1) {
@@ -71,19 +93,19 @@ void drawRGBgraph(){
   line(0, height_g*0.1, width_g, height_g*0.1);
   line(0, height_g*0.9, width_g, height_g*0.9);
 
-  y_p = map(red_p, 0, 255, height_g*0.9, height_g*0.1);
-  y = map(red_G, 0, 255, height_g*0.9, height_g*0.1);
+  y_p = map(red_p[n], 0, 255, height_g*0.9, height_g*0.1);
+  y = map(red_G[n], 0, 255, height_g*0.9, height_g*0.1);
   stroke(255, 0, 0);
   line((count-1)*10, y_p, (count)*10, y );
 
-  y_p = map(green_p, 0, 255, height_g*0.9, height_g*0.1);
-  y = map(green_G, 0, 255, height_g*0.9, height_g*0.1);
+  y_p = map(green_p[n], 0, 255, height_g*0.9, height_g*0.1);
+  y = map(green_G[n], 0, 255, height_g*0.9, height_g*0.1);
   stroke(0, 255, 0);
   line((count-1)*10, y_p, (count)*10, y );
 
 
-  y_p = map(blue_p, 0, 255, height_g*0.9, height_g*0.1);
-  y = map(blue_G, 0, 255, height_g*0.9, height_g*0.1);
+  y_p = map(blue_p[n], 0, 255, height_g*0.9, height_g*0.1);
+  y = map(blue_G[n], 0, 255, height_g*0.9, height_g*0.1);
   stroke(0, 0, 255);
   line((count-1)*10, y_p, (count)*10, y );
   
@@ -97,8 +119,8 @@ void drawColor(){
   pushMatrix(); //(0, 0)を原点とする座標軸をスタックに格納
   translate(width_g,0);
   stroke(0); noFill(); strokeWeight(3); rect(0,0,width-width_g,height_g);
-  noStroke(); fill(red_G,green_G,blue_G); 
-  rectMode(CENTER); rect((width-width_g)*0.5, height_g*0.5,200,200);
+  noStroke(); fill(red_G[n],green_G[n],blue_G[n]); 
+  rectMode(CENTER); rect((width-width_g)*0.5, height_g*0.5,(width-width_g)/2,height_g/2);
   rectMode(CORNER);
   popMatrix(); //座標軸の位置をスタックから取り出すし設定する ... この場合(0, 0)
 }
@@ -108,6 +130,11 @@ void keyPressed() {
     count_mode = 0;
   else if (key == 'c')
     count_mode = 1;
+}
+
+void mousePressed(){
+  n_zumo = 1;  // zumo1を開始させる
+  port1.write(n_zumo);
 }
 
 void drawZumo(){
@@ -129,79 +156,177 @@ void drawZumo(){
   line(CX-scale*my,100+scale*mx,CX+scale*my,100-scale*mx);
   line(CX+scale*my,100-scale*mx,CX+0.6*scale*my+0.2*scale*mx,100-0.6*scale*mx+0.2*scale*my);
   line(CX+scale*my,100-scale*mx,CX+0.6*scale*my-0.2*scale*mx,100-0.6*scale*mx-0.2*scale*my);
-  popMatrix(); //座標軸の位置をスタックから取り出すし設定する ... この場合(0, 0)
+  popMatrix(); //座標軸の位置をスタックから取り出し設定する ... この場合(0, 0)
 }
 
 void drawText(){
   pushMatrix(); //(0, 0)を原点とする座標軸をスタックに格納
-  translate(1000,height_g);  //座標軸を移動
-  noStroke();  fill(255);  rect(5,5,550,500); //白紙に戻す
-  stroke(0); noFill(); strokeWeight(3); rect(0,0,600,550); //黒枠の描画
+  translate(0,height_g);  //座標軸を移動
+  noStroke();  fill(255);  rect(5,5,width-10,height-height_g-10); //白紙に戻す
+  stroke(0); strokeWeight(3); 
+  
+  textSize(50);
+  textAlign(CENTER,TOP); // 中央揃え
+  
+  //Zumo1
+  noFill(); rect(0,0,width/3,height-height_g); //黒枠の描画
+  
+  if(n_zumo == 1) fill(255,0,0); //文字色：赤
+  else            fill(0);       //文字色：黒
+  text("Zumo1",width/6,50);
   
   fill(0); //文字色：黒
+  text("mode:"+ mode_G[0],width/6,100);
   
-  //zumo番号を描画
-  textSize(50);                                                  //文字の大きさを 20 に 
-  //println(n_zumo);
-  if(n_zumo == 1){
-    text("Zumo1",200,100);
-  }
-  else if(n_zumo == 2){
-    text("Zumo2",200,100);
-  }
-  else if(n_zumo == 3){
-    text("Zumo3",200,100);
-  }
+  if(motorL_G[0] == 0 && motorR_G[0]== 0) text("STOP",width/6,150);
+  else text("RUN",width/6,150);
+    
+  if(mode_G[0] == 3) text("CROSS",width/6,200);
+  else if(mode_G[0] == 4) text("Zone1",width/6,200);
   
-  if(motorL_G > 0 || motorR_G > 0)
-    text("RUN",200,150);
-  else
-    text("STOP",200,150);
+  if(zflag[0] == 1) text("END",width/6,250);
   
-  text("mode:"+mode_G,200,200);
+  textAlign(LEFT,TOP); 
+  fill(255,0,0); text("Red    :"+countR[0],width/6-100,300);
+  fill(0,255,0); text("Green :"+countG[0],width/6-100,350);
+  fill(0,0,255); text("Blue   :"+countB[0],width/6-100,400);
+  textAlign(CENTER,TOP); // 中央揃え
   
-   textSize(20);  
-  popMatrix(); //座標軸の位置をスタックから取り出すし設定する ... この場合(0, 0)
+  
+  //Zumo2
+  translate(width/3,0);  //座標軸を移動
+  noFill(); rect(0,0,width/3,height-height_g); //黒枠の描画
+  
+  if(n_zumo == 2) fill(255,0,0); //文字色：赤
+  else            fill(0);       //文字色：黒
+  text("Zumo2",width/6,50);
+  
+  fill(0); //文字色：黒
+  text("mode:"+ mode_G[1],width/6,100);
+  
+  if(motorL_G[1] == 0 && motorR_G[1]== 0) text("STOP",width/6,150);
+  else text("RUN",width/6,150);
+  
+  if(mode_G[1] == 3) text("CROSS",width/6,200);
+  else if(mode_G[1] == 4) text("Zone3",width/6,200);
+  
+  if(zflag[1] == 1) text("END",width/6,250);
+  
+  textAlign(LEFT,TOP); 
+  fill(255,0,0); text("Red    :"+countR[1],width/6-100,300);
+  fill(0,255,0); text("Green :"+countG[1],width/6-100,350);
+  fill(0,0,255); text("Blue   :"+countB[1],width/6-100,400);
+  textAlign(CENTER,TOP); // 中央揃え
+  
+  
+  //Zumo3
+  translate(width/3,0);  //座標軸を移動
+  noFill(); rect(0,0,width/3,height-height_g); //黒枠の描画
+  
+  if(n_zumo == 3) fill(255,0,0); //文字色：赤
+  else                     fill(0);           //文字色：黒
+  text("Zumo3",width/6,50);
+  
+  fill(0); //文字色：黒
+  text("mode:"+ mode_G[2],width/6,100);
+  
+  if(motorL_G[2] == 0 && motorR_G[2]== 0) text("STOP",width/6,150);
+  else text("RUN",width/6,150);
+  
+  if(mode_G[2] == 3) text("CROSS",width/6,200);
+  else if(mode_G[2] == 4) text("Zone2",width/6,200);
+  
+  if(zflag[2] == 1) text("END",width/6,250);
+  
+  textAlign(LEFT,TOP); 
+  fill(255,0,0); text("Red    :"+countR[2],width/6-100,300);
+  fill(0,255,0); text("Green :"+countG[2],width/6-100,350);
+  fill(0,0,255); text("Blue   :"+countB[2],width/6-100,400);
+  textAlign(CENTER,TOP); // 中央揃え
+  
+  // 元に戻す
+  fill(0); //文字色：黒
+  textSize(20);
+  textAlign(LEFT,TOP); 
+  popMatrix(); //座標軸の位置をスタックから取り出し設定する ... この場合(0, 0)
 }
 
 void draw() {
+  // Zumo番号を 配列で扱う数字n に変換
+  if(n_zumo > 3)n = 0;
+  else n = n_zumo - 1; 
+  
   drawRGBgraph();
   drawColor();
-  drawZumo();
+  //drawZumo();
   drawText();
 
  
 }
 
 void serialEvent(Serial p) {
-  if (p.available() >=13 ) {
-    if (p.read() == 'H') {
-      red_p = red_G; green_p = green_G; blue_p = blue_G; // 一つ前の色を格納しておく。
-      
-      mode_G = p.read();    red_G = p.read();    green_G = p.read();    blue_G = p.read();
-      ax = p.read()-128;      ay = p.read()-128;      az = p.read()-128;
-      mx = p.read()-128;      my = p.read()-128;      mz = p.read()-128;
-      motorL_G = 2*(p.read()-128);  motorR_G = 2*(p.read()-128);
-      
-      if(mode_G == 99){                    // 現在動作中Zumoの動作が終了したら
-        n_zumo++;                              //次のZumoへ移行
-        if(n_zumo > 2) n_zumo = 1;
-      }
-      sendZumoData();
-      p.clear(); //念の為クリア
-      p.write("A");
-      if ( count_mode == 1 )
-        ++count;
-    }
+  //zumo1
+  if (p == port1 && p.available() >= 11 && p.read() == 'H') {
+    red_p[0] = red_G[0]; green_p[0] = green_G[0]; blue_p[0] = blue_G[0]; // 一つ前の色を格納しておく。
+    
+    mode_G[0] = p.read(); red_G[0] = p.read(); green_G[0] = p.read(); blue_G[0] = p.read();
+    /*
+    ax = p.read()-128;      ay = p.read()-128;      az = p.read()-128;
+    mx = p.read()-128;      my = p.read()-128;      mz = p.read()-128;
+    */
+    countR[0] = p.read(); countG[0] = p.read(); countB[0] = p.read();
+    motorL_G[0] = 2*(p.read()-128);  motorR_G[0] = 2*(p.read()-128);
+    zflag[0] = p.read();
+    
+    p.clear(); //念の為クリア
+    port1.write(n_zumo);
+    
+    if ( n_zumo == 1 && count_mode == 1 )
+      ++count;
   }
   
-}
-
-void sendZumoData(){
-  port1.write('H');            //port1に’H'を送信
-  port1.write(n_zumo);  //port1にn_zumoの内容を送信
-  port2.write('H');           //port2に’H'を送信
-  port2.write(n_zumo); //port2にn_zumoの内容を送信
-  //port3.write('H');          //port3に’H'を送信
-  //port3.write(n_zumo); //port3にn_zumoの内容を送信
+  //zumo2
+  if (p == port2 && p.available() >= 11 && p.read() == 'H') {
+    red_p[1] = red_G[1]; green_p[1] = green_G[1]; blue_p[1] = blue_G[1]; // 一つ前の色を格納しておく。
+    
+    mode_G[1] = p.read(); red_G[1] = p.read(); green_G[1] = p.read(); blue_G[1] = p.read();
+    /*
+    ax = p.read()-128;      ay = p.read()-128;      az = p.read()-128;
+    mx = p.read()-128;      my = p.read()-128;      mz = p.read()-128;
+    */
+    countR[1] = p.read(); countG[1] = p.read(); countB[1] = p.read();
+    motorL_G[1] = 2*(p.read()-128);  motorR_G[1] = 2*(p.read()-128);
+    zflag[1] = p.read();
+   
+    p.clear(); //念の為クリア
+    port2.write(n_zumo);
+    
+    if ( n_zumo == 2 && count_mode == 1 )
+      ++count;
+  }
+  
+  //zumo3
+  if (p == port3 && p.available() >= 11 && p.read() == 'H') {
+    red_p[2] = red_G[2]; green_p[2] = green_G[2]; blue_p[2] = blue_G[2]; // 一つ前の色を格納しておく。
+    
+    mode_G[2] = p.read(); red_G[2] = p.read(); green_G[2] = p.read(); blue_G[2] = p.read();
+    /*
+    ax = p.read()-128;      ay = p.read()-128;      az = p.read()-128;
+    mx = p.read()-128;      my = p.read()-128;      mz = p.read()-128;
+    */
+    countR[2] = p.read(); countG[2] = p.read(); countB[2] = p.read();
+    motorL_G[2] = 2*(p.read()-128);  motorR_G[2] = 2*(p.read()-128);
+    zflag[2] = p.read();
+    
+    p.clear(); //念の為クリア
+    port3.write(n_zumo);
+    
+    if ( n_zumo == 3 && count_mode == 1 )
+      ++count;
+  }
+  
+  // 動作させるZumo番号の判定
+    if(zflag[0] == 1 && zflag[1] == 0 && zflag[2] == 0) n_zumo = 2;
+    else if(zflag[0] == 1 && zflag[1] == 1 && zflag[2] == 0) n_zumo = 3;
+  
 }

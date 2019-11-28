@@ -84,10 +84,7 @@ void task_B(){
 
     case 1://通常走行
       linetrace_P(); // ライントレース（各自で作成）
-      startTime = timeNow_G;
-      if(timeNow_G - startTime > 1000){
-        mode_G = 99;
-      }
+
       color = identify_RGB(); // ラインの色を推定(R:赤，G:緑，B:青，-:それ以外）
       
       if ( color == 'R' ) { // red
@@ -97,6 +94,9 @@ void task_B(){
       else if ( color == 'G' && countR > 0) { // green
         countG++;
         mode_G = 2;
+      }
+      if (color == 'B' ){
+        mode_G = 99;
       }
       break;
 
@@ -149,15 +149,10 @@ void task_B(){
         mode_G = 2;
       }
       break;
-    case 98:
-      motorR_G = 0;
-      motorL_G = 0;
-      break;
     case 99:
       motorR_G = 0;
       motorL_G = 0;
-      sendData();
-      mode_G = 98;
+      zflag = 1;
       break;
   }
 }
