@@ -34,7 +34,9 @@ float Diff_bef;//前回の偏差
 
 int n_zumo = 0; // 動作させるズーモ番号を格納   // 乾 追記11.24
 int zflag = 0; // 一周終われば 1              // 乾 追記11.24
-
+int sflag = 0;
+int countZone;
+int countCross;
 void setup()
 {
 	Serial.begin(9600);
@@ -55,25 +57,30 @@ void setup()
 	mode_G = 0;
 	zflag = 0;
 	n_zumo = 0;
-	button.waitForButton();
+	//button.waitForButton();
 	timeInit_G = millis();
 	motorR_G = 0;
 	motorL_G = 0;
+  countZone = 0;
+  countCross  = 0;
 }
 
 void loop()
 {
 	
-		readRGB(); // カラーセンサでRGB値を取得(0-255)
-		direction_G = averageHeadingLP();
+  readRGB(); // カラーセンサでRGB値を取得(0-255)
+	direction_G = averageHeadingLP();
 	 
 	timeNow_G = millis() - timeInit_G; // 経過時間
-	if(n_zumo == ZUMO_NUM){  // zumo番号が一致していたらタスクを行う  乾 追記11.24
+	if(n_zumo == ZUMO_NUM || sflag == 1){  // zumo番号が一致していたらタスクを行う  乾 追記11.24
 		linetrace_P();
-		avoidance();
+		//avoidance();
 		task_B(); 
 
 	}
+ if(button.isPressed()){
+  sflag = 1;
+ }
 	
 		 motors.setSpeeds(motorL_G, motorR_G); // 左右モーターへの回転力入力
 	//delay(10);

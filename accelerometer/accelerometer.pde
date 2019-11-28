@@ -49,14 +49,14 @@ void setup() {
      motorR_G[i] = 0; motorL_G[i] = 0;
    }
    
-   //port1 = new Serial(this, "COM3", 9600); //Serial クラスのインスタンスを生成
-   //port1.clear();
+   port1 = new Serial(this, "/dev/ttyUSB0", 9600); //Serial クラスのインスタンスを生成
+   port1.clear();
    //port1.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
-   //port2 = new Serial(this, "/dev/ttyUSB1", 9600); //Serial クラスのインスタンスを生成
-   //port2.clear();
+   port2 = new Serial(this, "/dev/ttyUSB1", 9600); //Serial クラスのインスタンスを生成
+   port2.clear();
    //port2.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
-   //port3 = new Serial(this, "/dev/ttyUSB2", 9600); //Serial クラスのインスタンスを生成
-   //port3.clear();
+   port3 = new Serial(this, "/dev/ttyUSB2", 9600); //Serial クラスのインスタンスを生成
+   port3.clear();
    //port3.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
 }
 
