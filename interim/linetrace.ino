@@ -1,29 +1,43 @@
 void linetrace_P(){
   static float lightMin = 0;
   static float lightMax = 255;
-  static float speed = 200; //
-  static float Kp = 1.8; //P制御の比例定数
-  static float Ki = 0.3; //I制御の比例定数
-  static float Kd = 1.8; //D制御の比例定数
-
-  //speed 250,Kp1.8,Ki0.3,Kd1.8で安定
+  static float speed = 200;
+  static float Kp = 1.8;//P制御の比例定数
+  static float Ki = 0.3;//I制御の比例定数
+  static float Kd = 1.3;//D制御の比例定数
   float lightNow;
-  float Diff; //偏差
+  float speedDiff;
+
+  lightNow = (red_G + green_G + blue_G) / 3.0;//赤と緑と青のセンサの値の平均値を取る
+  //speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
+  speedDiff = map(blue_G,0,255,-speed,speed);
+  Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
   
-  lightNow = (red_G + green_G + blue_G ) / 3.0; //赤と緑と青のセンサの値の平均値を取る
-  //Diff = map(lightNow,lightMin,lightMax,-speed,speed); //lightNowの値に応じてDiffを変更(白黒ライントレース)
-  //Diff = map(green_G,dataG_min,dataG_max,-speed,speed); //green_Gの値に応じてDiffを変更(緑色ライントレース)
-  Diff = map(blue_G,0,255,-speed,speed); //blue_Gの値に応じてDiffを変更(青色ライントレース)
-  Diff_sum += Diff; //現在の偏差を偏差の累積値として足す
-  /*右側トレース
-  motorL_G = speed - Kp*Diff;  - Ki*Diff_sum - Kd*(Diff - Diff_bef); //PID制御
-  motorR_G = speed + Kp*Diff;  + Ki*Diff_sum + Kd*(Diff - Diff_bef); //PID制御
-  */
-  motorR_G = speed - Kp*Diff;  - Ki*Diff_sum - Kd*(Diff - Diff_bef); //PID制御
-  motorL_G = speed + Kp*Diff;  + Ki*Diff_sum + Kd*(Diff - Diff_bef); //PID制御
-  Diff_bef = Diff; //現在の偏差を前回の値として格納
+  motorL_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
+  motorR_G = speed -Kp*speedDiff -Ki*speedDiff - Kd*(speedDiff - Diff_bef);
+  Diff_bef = speedDiff; 
 }
-/*
+
+void linetrace_P2(){
+  static float lightMin = 0;
+  static float lightMax = 255;
+  static float speed = 200;
+  static float Kp = 0.5;//P制御の比例定数
+  static float Ki = 0.3;//I制御の比例定数
+  static float Kd = 0.5;//D制御の比例定数
+  float lightNow;
+  float speedDiff;
+
+  lightNow = (red_G + green_G + blue_G) / 3.0;//赤と緑と青のセンサの値の平均値を取る
+  //speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
+  speedDiff = map(blue_G,0,255,-speed,speed);
+  Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
+  
+  motorL_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
+  motorR_G = speed -Kp*speedDiff -Ki*speedDiff - Kd*(speedDiff - Diff_bef);
+  Diff_bef = speedDiff; 
+}
+
 void task_A()
 {
   static int stop_period; // static変数であることに注意
@@ -50,9 +64,6 @@ void task_A()
         stop_period = 1500;
         mode_G = 2;
       }
-      else if ( color == 'B') { // blue
-        mode_G = 99;
-      }
       break;
 
     case 2:
@@ -71,11 +82,13 @@ void task_A()
       break;
   }
 }
-*/
+
 void task_B(){
   static int stop_period; // static変数であることに注意
   static unsigned long startTime; // static変数，時間計測ははunsigned long
+  static unsigned long redTimer;//赤色を取得して一定時間経ったらcountRをリセット
   char color;
+  static int countZone;
 
   switch ( mode_G ) {
     case 0://待機モード
@@ -84,9 +97,11 @@ void task_B(){
 
     case 1://通常走行
       linetrace_P(); // ライントレース（各自で作成）
-
       color = identify_RGB(); // ラインの色を推定(R:赤，G:緑，B:青，-:それ以外）
-      
+      if(timeNow_G - redTimer > 5000){//一定時間経過で赤リセット
+        countR = 0;
+        countG = 0;
+      }
       if ( color == 'R' ) { // red
         countR++;
         mode_G = 2;
@@ -95,9 +110,6 @@ void task_B(){
         countG++;
         mode_G = 2;
       }
-      if (color == 'B' ){
-        mode_G = 99;
-      }
       break;
 
     case 2://赤、緑を検出
@@ -105,55 +117,69 @@ void task_B(){
       if ( identify_RGB() == 'B' ) { // brue
         startTime = timeNow_G; // mode_G=3に遷移した時刻を記録
         if(countR < 2){//再度通常走行
+          redTimer = timeNow_G;
           mode_G = 1;
-        }
-        if(countR >= 2 &&countG < 1){//交差点
+        }else if(countG < 1){//交差点
           mode_G = 3;
-        }
-        if(countR >= 2 &&countG >=1){//ゾーンに入った
+        }else if(countG >=1){//ゾーンに入った
           mode_G = 4;
         }
       }
       break;
     case 3://交差点
-      linetrace_P(); // ライントレース
-      motors.setSpeeds(0,0);
-      if(timeNow_G - startTime > 1000){
+      linetrace_P2(); // ライントレース
+      if(timeNow_G - startTime > 1500){
         countR = 0;
         mode_G = 1;
+        if(countZone >= 3){
+          mode_G = 99;
+        }
       }
       break;
     case 4://各ゾーンでの行動
-      motors.setSpeeds(200,-200);//右回転
+     switch(countG){
+      case 3:
+      motorL_G = 100;//右回転
+      motorR_G = -100;
       if(timeNow_G - startTime >500){
-        motors.setSpeeds(-200,200);//左回転
+        motorL_G = -100;//左回転
+        motorR_G = 100;
         if(timeNow_G - startTime > 1500){
-          motors.setSpeeds(200,-200);//右回転
+          motorL_G = 100;
+          motorR_G = -100;
           if(timeNow_G - startTime > 2000){
             countR = 0;
             countG = 0;
+            countZone++;
             mode_G = 1;
           }
         }
       }
       break;
-    case 5://時間を取得
+			default:
+				countZone++;
+				break;
+     }
+     break;
+    case 5://衝突回避用の時間待機
+      motorL_G = 0;
+      motorR_G = 0;
       startTime = timeNow_G;
-      motors.setSpeeds(0,0);
       mode_G = 6;
       break;
-    case 6://衝突回避
-      linetrace_P();//ライントレース
-      motors.setSpeeds(0,0);
-      if(timeNow_G - startTime > 10){
-        mode_G = 2;
+    case 6:
+      motorL_G = 0;
+      motorR_G = 0;
+      if(timeNow_G - startTime > 200){
+        avoidance();
+        mode_G = 5;
       }
       break;
     case 99:
-      motorR_G = 0;
+		  zflag = 1;
       motorL_G = 0;
-      zflag = 1;
-      break;
+      motorR_G = 0;
+      break;  
   }
 }
 
