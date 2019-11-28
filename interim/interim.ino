@@ -63,10 +63,10 @@ void setup()
 
 void loop()
 {
-	/*
-		 readRGB(); // カラーセンサでRGB値を取得(0-255)
-		 direction_G = averageHeadingLP();
-	 */
+	
+		readRGB(); // カラーセンサでRGB値を取得(0-255)
+		direction_G = averageHeadingLP();
+	 
 	timeNow_G = millis() - timeInit_G; // 経過時間
 	if(n_zumo == ZUMO_NUM){  // zumo番号が一致していたらタスクを行う  乾 追記11.24
 		linetrace_P();
@@ -74,7 +74,7 @@ void loop()
 		task_B(); 
 
 	}
-	/*
+	
 		 motors.setSpeeds(motorL_G, motorR_G); // 左右モーターへの回転力入力
 	//delay(10);
 	ax = compass.a.x;  ay = compass.a.y;  az = compass.a.z;
@@ -89,7 +89,7 @@ void loop()
 	mx = map(mx,compass.m_min.x,compass.m_max.x,-128,127);
 	my = map(my,compass.m_min.y,compass.m_max.y,-128,127);
 	mz = map(mz,compass.m_min.z,compass.m_max.z,-128,127); 
-	 */
+	 
 	sendData(); // データ送信
 }
 
