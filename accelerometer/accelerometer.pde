@@ -19,6 +19,7 @@ int[] zflag   = new int[3];  // 一周終わったら1
 int[] red_G   = new int[3];
 int[] green_G = new int[3];
 int[] blue_G  = new int[3];
+
 int[] red_p   = new int[3];
 int[] green_p = new int[3];
 int[] blue_p  = new int[3];
@@ -52,11 +53,11 @@ void setup() {
    port1 = new Serial(this, "/dev/ttyUSB0", 9600); //Serial クラスのインスタンスを生成
    port1.clear();
    //port1.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
-   port2 = new Serial(this, "/dev/ttyUSB1", 9600); //Serial クラスのインスタンスを生成
-   port2.clear();
+   //port2 = new Serial(this, "/dev/ttyUSB1", 9600); //Serial クラスのインスタンスを生成
+   //port2.clear();
    //port2.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
-   port3 = new Serial(this, "/dev/ttyUSB2", 9600); //Serial クラスのインスタンスを生成
-   port3.clear();
+   //port3 = new Serial(this, "/dev/ttyUSB2", 9600); //Serial クラスのインスタンスを生成
+   //port3.clear();
    //port3.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
 }
 
@@ -185,13 +186,19 @@ void drawText(){
   else if(mode_G[0] == 4) text("Zone1",width/6,200);
   
   if(zflag[0] == 1) text("END",width/6,250);
-  
+  /*
   textAlign(LEFT,TOP); 
   fill(255,0,0); text("Red    :"+countR[0],width/6-100,300);
   fill(0,255,0); text("Green :"+countG[0],width/6-100,350);
   fill(0,0,255); text("Blue   :"+countB[0],width/6-100,400);
   textAlign(CENTER,TOP); // 中央揃え
-  
+  */
+  text("ax :"+ax,width/6-100,300);
+  text("ay :"+ay,width/6-100,350);
+  text("az :"+az,width/6-100,400);
+  text("mx :"+mx,width/6+75,300);
+  text("my :"+my,width/6+75,350);
+  text("mz :"+mz,width/6+75,400);
   
   //Zumo2
   translate(width/3,0);  //座標軸を移動
@@ -266,14 +273,16 @@ void draw() {
 
 void serialEvent(Serial p) {
   //zumo1
-  if (p == port1 && p.available() >= 11 && p.read() == 'H') {
+  if (p == port1 && p.available() >= 17 && p.read() == 'H') {
     red_p[0] = red_G[0]; green_p[0] = green_G[0]; blue_p[0] = blue_G[0]; // 一つ前の色を格納しておく。
     
-    mode_G[0] = p.read(); red_G[0] = p.read(); green_G[0] = p.read(); blue_G[0] = p.read();
-    /*
+    mode_G[0] = p.read(); 
+    
+    red_G[0] = p.read(); green_G[0] = p.read(); blue_G[0] = p.read();
+    
     ax = p.read()-128;      ay = p.read()-128;      az = p.read()-128;
     mx = p.read()-128;      my = p.read()-128;      mz = p.read()-128;
-    */
+    
     countR[0] = p.read(); countG[0] = p.read(); countB[0] = p.read();
     motorL_G[0] = 2*(p.read()-128);  motorR_G[0] = 2*(p.read()-128);
     zflag[0] = p.read();
@@ -328,5 +337,4 @@ void serialEvent(Serial p) {
   // 動作させるZumo番号の判定
     if(zflag[0] == 1 && zflag[1] == 0 && zflag[2] == 0) n_zumo = 2;
     else if(zflag[0] == 1 && zflag[1] == 1 && zflag[2] == 0) n_zumo = 3;
-  
 }

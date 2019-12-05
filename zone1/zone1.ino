@@ -73,10 +73,9 @@ void loop()
 	 
 	timeNow_G = millis() - timeInit_G; // 経過時間
 	if(n_zumo == ZUMO_NUM || sflag == 1){  // zumo番号が一致していたらタスクを行う  乾 追記11.24
-		linetrace_P();
 		//avoidance();
-		task_B(); 
-
+		//task_B(); 
+    task_C();
 	}
  if(button.isPressed()){
   sflag = 1;
