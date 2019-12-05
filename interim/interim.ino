@@ -9,9 +9,9 @@ Pushbutton button(ZUMO_BUTTON);
 LSM303 compass;
 
 #define SPEED 70 // Zumoのモータに与える回転力の基準値 
-#define ZUMO_NUM 1 //+ Zumo番号(1から3までの3台)
+//#define ZUMO_NUM 1 //+ Zumo番号(1から3までの3台)
 //#define ZUMO_NUM 2 //+ Zumo番号(1から3までの3台)
-//#define ZUMO_NUM 3 //+ Zumo番号(1から3までの3台)
+#define ZUMO_NUM 3 //+ Zumo番号(1から3までの3台)
 
 //超音波センサ
 const int trig = 2;     //TrigピンをArduinoの2番ピンに

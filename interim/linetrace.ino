@@ -9,7 +9,7 @@ void linetrace_P(){
   float speedDiff;
 
   lightNow = (red_G + green_G + blue_G) / 3.0;//赤と緑と青のセンサの値の平均値を取る
-  speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
+  speedDiff = map(lightNow,lightMin,lightMax-20,-speed,speed);
   //speedDiff = map(blue_G,0,255,-speed,speed);
   Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
   
@@ -20,7 +20,7 @@ void linetrace_P(){
 
 void linetrace_P2(){
   static float lightMin = 0;
-  static float lightMax = 255;
+  static float lightMax = 200;
   static float speed = 150;
   static float Kp = 0.5;//P制御の比例定数
   static float Ki = 0.3;//I制御の比例定数
@@ -114,7 +114,7 @@ void task_B(){
 
     case 2://赤、緑を検出
       linetrace_P(); // ライントレース
-      if ( identify_RGB() == 'B') { // brue
+      if ( identify_RGB() != 'R' && identify_RGB() != 'G') { // brue
         startTime = timeNow_G; // mode_G=3に遷移した時刻を記録
         if(countR < 2){//再度通常走行
           redTimer = timeNow_G;
@@ -140,7 +140,7 @@ void task_B(){
       break;
     case 4://各ゾーンでの行動
      switch(countG){
-      case 3: //zonebangou
+      case 1: //zonebangou
       motorL_G = 100;//右回転
       motorR_G = -100;
       if(timeNow_G - startTime >500){
@@ -159,6 +159,8 @@ void task_B(){
       }
       break;
 			default:
+        countR = 0;
+        countG = 0;
 				countZone++;
         mode_G = 1;
 				break;
