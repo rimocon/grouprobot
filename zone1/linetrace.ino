@@ -27,11 +27,13 @@ void linetrace_P2(){
   static float Kd = 0.5;//D制御の比例定数
   float lightNow;
   float speedDiff;
-
+  
+  
   lightNow = (red_G + green_G + blue_G) / 3.0;//赤と緑と青のセンサの値の平均値を取る
   speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
   //speedDiff = map(blue_G,0,255,-speed,speed);
   Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
+  
   
   motorL_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
   motorR_G = speed -Kp*speedDiff -Ki*speedDiff - Kd*(speedDiff - Diff_bef);
@@ -42,19 +44,37 @@ void linetrace_P3() { //zone1用のトレース
   static float lightMin = 0;
   static float lightMax = 255;
   static float speed = 100;
-  static float Kp = 1.2;//P制御の比例定数
-  static float Ki = 0.0;//I制御の比例定数
+  static float speedL;
+  static float speedR;
+  static float Kp = 1.3;//P制御の比例定数
+  static float Ki = 0.8;//I制御の比例定数
   static float Kd = 0.8;//D制御の比例定数
   float lightNow;
   float speedDiff;
-
+  float integral;
+  
+  count++;
+  integral = Diff_sum / count;
   lightNow = (red_G + green_G + blue_G) / 3.0;//赤と緑と青のセンサの値の平均値を取る
   speedDiff = map(lightNow,lightMin,lightMax,-speed,speed);
   //speedDiff = map(blue_G,0,255,-speed,speed);
   Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
+  integral = Diff_sum / count;
+  if(speedDiff > speed/2){ // 3/4白の時
+    speedL = speed +Kp*(speedDiff+20) ;//+Ki*integral + Kd*(speedDiff - Diff_bef);
+    speedR = -speed -Kp*(speedDiff+20) ;//-Ki*integral - Kd*(speedDiff - Diff_bef);
+  }
+  else if (speedDiff < -speed/2) { //3/4色の時
+    speedL = -speed +Kp*(speedDiff -20) ;//+Ki*integral + Kd*(speedDiff - Diff_bef);
+    speedR = speed -Kp*(speedDiff-20) ;//-Ki*integral - Kd*(speedDiff - Diff_bef);
+  }
+  else{
+    speedL = speed +Kp*speedDiff +Ki*integral + Kd*(speedDiff - Diff_bef);
+    speedR = speed -Kp*speedDiff -Ki*integral - Kd*(speedDiff - Diff_bef);
+  }
   
-  motorL_G = speed +Kp*speedDiff +Ki*Diff_sum + Kd*(speedDiff - Diff_bef);
-  motorR_G = speed -Kp*speedDiff -Ki*Diff_sum - Kd*(speedDiff - Diff_bef);
+  motorL_G = speedL;
+  motorR_G = speedR;
   Diff_bef = speedDiff; 
 }
 
