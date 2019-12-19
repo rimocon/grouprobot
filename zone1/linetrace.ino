@@ -164,7 +164,36 @@ void task_B(){
 }
 
 void task_C() {
-  linetrace_P3();
+  static unsigned long startTime; // static変数，時間計測はunsigned long
+  char color;
+  
+  switch ( mode_G ) {
+  case 0://待機モード
+    mode_G = 1;
+    break;  // break文を忘れない（忘れるとその下も実行される）
+  case 1: //白色まで走る
+    motorL_G = 100;
+    motorR_G = 100;
+    color = identify_RGB();
+    if(color == 'W'){
+      mode_G = 2;
+    }
+  case 2: //探す
+    motorL_G = 100;
+    motorR_G = 100;
+    color = identify_RGB();
+    if(color != 'W') {
+      startTime = timeNow_G;
+      mode_G = 3;
+    }
+    break;
+  case 3: //図形トレース
+    linetrace_P3();
+    if(timeNow_G - startTime > 400){ //図形トレース終了
+      mode_G = 1;
+    }
+    break;
+  }
 }
 
 // lineの色の推定
@@ -180,6 +209,8 @@ char identify_RGB()
     return 'G';
   else if ( blue_G > alpha * red_G && green_G > alpha * red_G)
     return 'C';
+  else if ( blue_G > 220 && red_G > 220 && green_G > 220) //白
+    return 'W';
   else
     return '-';
 }
