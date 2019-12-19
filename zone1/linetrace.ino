@@ -198,21 +198,35 @@ void task_C() {
     if(color == 'W'){
       mode_G = 2;
     }
-  case 2: //探す
+    break;
+  case 2: //図形を探す
     motorL_G = 100;
     motorR_G = 100;
     color = identify_RGB();
     if(color != 'W') {
       startTime = timeNow_G;
-      mode_G = 3;
+      if(color == 'B') {//黒色だったら回転
+        mode_G = 3;
+      }
+      else{ //それ以外だったら(普通の色とか)
+        mode_G = 4; //トレースに移行
+      }
     }
     break;
-  case 3: //図形トレース
+  case 3: //回転用
+    motorL_G = 100;
+    motorR_G = -100;
+    if(timeNow_G - startTime > 1000){ //1秒回転したら
+      mode_G = 1; //図形探しに戻る
+    }
+    break;
+  case 4: //図形トレース
     linetrace_P3();
-    if(timeNow_G - startTime > 400){ //図形トレース終了
+    if(timeNow_G - startTime >10000){ //図形トレース終了
       mode_G = 1;
     }
     break;
+  
   }
 }
 
@@ -229,8 +243,10 @@ char identify_RGB()
     return 'G';
   else if ( blue_G > alpha * red_G && green_G > alpha * red_G)
     return 'C';
-  else if ( blue_G > 220 && red_G > 220 && green_G > 220) //白
+  else if ( blue_G > 200 && red_G > 200 && green_G > 200) //白
     return 'W';
+  else if ( (blue_G + red_G + green_G)/3 < 30) //黒
+    return 'B';
   else
     return '-';
 }

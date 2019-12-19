@@ -260,12 +260,14 @@ void drawText(){
 
 void draw() {
   // Zumo番号を 配列で扱う数字n に変換
+
   if(n_zumo > 3)n = 0;
   else n = n_zumo - 1; 
   
+
   drawRGBgraph();
   drawColor();
-  //drawZumo();
+  drawZumo();
   drawText();
 
  
