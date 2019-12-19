@@ -17,6 +17,7 @@ LSM303 compass;
 const int trig = 2;     //TrigピンをArduinoの2番ピンに
 const int echo = 4;     //EchoピンをArduinoの4番ピンに
 
+unsigned  long count = 0;
 unsigned long interval; //Echo のパルス幅(μs)
 int distance;           //距離(cm)
 
