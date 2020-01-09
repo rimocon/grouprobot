@@ -38,11 +38,14 @@ int zflag = 0; // 一周終われば 1              // 乾 追記11.24
 int sflag = 0;
 int countZone;
 int countCross;
+//追加部分
+int countTrace; //何回トレースしたか
+char tracecolor[6] = {'A','A','A','A','A','A'} ; //トレースした色を格納するための変数,Aで初期化
+bool flag_samecolor; //トレース済みかどうかのフラグ
 void setup()
 {
 	Serial.begin(9600);
 	Wire.begin();
-
 	button.waitForButton();
 	setupColorSensor(); // カラーセンサーのsetup
 	calibrationColorSensorWhite(); // カラーセンサーのキャリブレーション
@@ -64,6 +67,9 @@ void setup()
 	motorL_G = 0;
   countZone = 0;
   countCross  = 0;
+  //追加部分
+  countTrace = 0;
+  flag_samecolor = false;
 }
 
 void loop()

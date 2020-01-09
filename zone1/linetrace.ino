@@ -43,12 +43,12 @@ void linetrace_P2(){
 void linetrace_P3() { //zone1用のトレース
   static float lightMin = 0;
   static float lightMax = 255;
-  static float speed = 100;
+  static float speed = 90;
   static float speedL;
   static float speedR;
   static float Kp = 1.3;//P制御の比例定数
-  static float Ki = 0.8;//I制御の比例定数
-  static float Kd = 0.8;//D制御の比例定数
+  static float Ki = 0.7;//I制御の比例定数
+  static float Kd = 0.9;//D制御の比例定数
   float lightNow;
   float speedDiff;
   float integral;
@@ -203,30 +203,55 @@ void task_C() {
     motorL_G = 100;
     motorR_G = 100;
     color = identify_RGB();
-    if(color != 'W') {
+
+    if( color != 'W'){ //白以外の時
       startTime = timeNow_G;
-      if(color == 'B') {//黒色だったら回転
+      if(color == 'K') {//黒色だったら回転
         mode_G = 3;
       }
-      else{ //それ以外だったら(普通の色とか)
-        mode_G = 4; //トレースに移行
+      else if(color == '-'){
+        mode_G = 2; //何もしない
       }
-    }
+      else{//それ以外(三原色+中間色3つ)
+        motorL_G = 0; //とりあえず止まらせる
+        motorR_G = 0;
+        for(int i = 0; i < countTrace+1; i++){
+          if(color == tracecolor[i]) flag_samecolor = true;//すでにトレース済みフラグをあげる
+        }
+        if(flag_samecolor){ //トレース済みの色だったら
+          mode_G = 1; //図形探しに戻る
+          flag_samecolor = false; //フラグ下げ
+        }
+        else{ //トレースしたことがない色だったら
+          tracecolor[countTrace] = color; //色を格納
+          countTrace++; //カウントを増やす
+          mode_G = 4; //トレースに移行
+        }
+       }
+      }
     break;
   case 3: //回転用
-    motorL_G = 100;
-    motorR_G = -100;
-    if(timeNow_G - startTime > 1000){ //1秒回転したら
+    motorL_G = 150;
+    motorR_G = -150;
+    if(timeNow_G - startTime > 2000){ //1秒回転したら
       mode_G = 1; //図形探しに戻る
     }
     break;
   case 4: //図形トレース
     linetrace_P3();
-    if(timeNow_G - startTime >10000){ //図形トレース終了
-      mode_G = 1;
+    color = identify_RGB();
+    if(timeNow_G - startTime > 5000){ //図形トレース終了
+      if(countTrace == 5) mode_G = 5; //全ての図形をトレースし終わったら
+      else mode_G = 1; //まだトレースしきってなかったら図形探しを続行
+    }
+    if(color == 'K'){ //黒色の時
+      startTime = timeNow_G;
+      mode_G = 3; //回転の戻る
     }
     break;
-  
+  case 5:
+    //出る処理
+   break;
   }
 }
 
@@ -235,18 +260,22 @@ char identify_RGB()
 {
   float alpha = 1.2; // パラメーター
 
-  if ( blue_G > alpha * red_G && blue_G > alpha * green_G ) // _*_Gはグローバル変数
+  if ( blue_G > alpha * red_G && blue_G > alpha * green_G ) // ブルー
     return 'B';
-  else if ( red_G > alpha * blue_G && red_G > alpha * green_G )
+  else if ( red_G > alpha * blue_G && red_G > alpha * green_G ) //レッド
     return 'R';
-  else if ( green_G > alpha * red_G && green_G > alpha * blue_G )
+  else if ( green_G > alpha * red_G && green_G > alpha * blue_G ) //グリーン
     return 'G';
-  else if ( blue_G > alpha * red_G && green_G > alpha * red_G)
+  else if ( blue_G > alpha * red_G && green_G > alpha * red_G) //シアン
     return 'C';
-  else if ( blue_G > 200 && red_G > 200 && green_G > 200) //白
+  else if ( red_G > alpha * green_G && blue_G > alpha * green_G) //マジェンタ
+    return 'M';
+  else if ( green_G > alpha * blue_G && red_G > alpha * blue_G) //イエロー
+    return 'Y';
+  else if ( (blue_G + red_G + green_G)/3 > 200) //白
     return 'W';
-  else if ( (blue_G + red_G + green_G)/3 < 30) //黒
-    return 'B';
+  else if ( (blue_G + red_G + green_G)/3 < 50) //黒
+    return 'K';
   else
     return '-';
 }
