@@ -140,23 +140,11 @@ void task_B(){
       break;
     case 4://各ゾーンでの行動
      switch(countG){
-      case 1: //zonebangou
-      motorL_G = 100;//右回転
-      motorR_G = -100;
-      if(timeNow_G - startTime >500){
-        motorL_G = -100;//左回転
-        motorR_G = 100;
-        if(timeNow_G - startTime > 1500){
-          motorL_G = 100;
-          motorR_G = -100;
-          if(timeNow_G - startTime > 2000){
-            countR = 0;
-            countG = 0;
-            countZone++;
-            mode_G = 1;
-          }
-        }
-      }
+      case 3: //zonebangou
+        countR = 0;
+        countG = 0;
+        countZone++;
+        mode_G = 10;
       break;
 			default:
         countR = 0;
@@ -184,7 +172,9 @@ void task_B(){
       sflag = 0;
       motorL_G = 0;
       motorR_G = 0;
-      break;  
+      break;
+    default:
+      break;
   }
 }
 
