@@ -1,3 +1,4 @@
+
 void linetrace_P(){
   static float lightMin = 0;
   static float lightMax = 255;
@@ -82,6 +83,7 @@ void task_B(){
   static int stop_period; // static変数であることに注意
   static unsigned long startTime; // static変数，時間計測ははunsigned long
   static unsigned long redTimer;//赤色を取得して一定時間経ったらcountRをリセット
+  static unsigned long traceTime; //トレースしきれなかった時用
   char color;
 
 
@@ -136,21 +138,11 @@ void task_B(){
     case 4://各ゾーンでの行動
      switch(countG){
       case 1: //zonebangou
-      motorL_G = 100;//右回転
-      motorR_G = -100;
+      motorL_G = -150;//右回転
+      motorR_G = 150;
       if(timeNow_G - startTime >500){
-        motorL_G = -100;//左回転
-        motorR_G = 100;
-        if(timeNow_G - startTime > 1500){
-          motorL_G = 100;
-          motorR_G = -100;
-          if(timeNow_G - startTime > 2000){
-            countR = 0;
-            countG = 0;
-            countZone++;
-            mode_G = 1;
-          }
-        }
+        startTime = timeNow_G;
+        mode_G = 100;
       }
       break;
 			default:
@@ -180,21 +172,146 @@ void task_B(){
       motorL_G = 0;
       motorR_G = 0;
       break;  
+    case 100: //zone1の内容
+      traceTime = timeNow_G;
+      motorL_G = 150;
+      motorR_G = 150;
+      if(timeNow_G - startTime > 1000) mode_G = 101;
+      break;  // break文を忘れない（忘れるとその下も実行される）
+    case 101: //白色まで走る
+    motorL_G = 100;
+    motorR_G = 100;
+    color = identify_RGB();
+    
+    if(color == 'W'){
+      mode_G = 102;
+    }
+    break;
+  case 102: //図形を探す
+    motorL_G = 100;
+    motorR_G = 100;
+    color = identify_RGB();
+
+    if( color != 'W'){ //白以外の時
+      startTime = timeNow_G;
+      if(color == 'K') {//黒色だったら回転
+        mode_G = 103;
+      }
+      else if(color == '-'){
+        mode_G = 102; //何もしない
+      }
+      else{//それ以外(三原色+中間色3つ)
+        motorL_G = 0; //とりあえず止まらせる
+        motorR_G = 0;
+        for(int i = 0; i < countTrace+1; i++){
+          if(color == tracecolor[i]) flag_samecolor = true;//すでにトレース済みフラグをあげる
+        }
+        if(flag_samecolor){ //トレース済みの色だったら
+          mode_G = 101; //図形探しに戻る
+          flag_samecolor = false; //フラグ下げ
+        }
+        else{ //トレースしたことがない色だったら
+          tracecolor[countTrace] = color; //色を格納
+          countTrace++; //カウントを増やす
+          mode_G = 104; //トレースに移行
+        }
+       }
+      }
+    break;
+  case 103: //回転用
+    motorL_G = 150;
+    motorR_G = -150;
+    if(timeNow_G - startTime > 1000){ //1秒回転したら
+      mode_G = 101; //図形探しに戻る
+    }
+    break;
+  case 104: //図形トレース
+    linetrace_P3();
+    color = identify_RGB();
+    if(timeNow_G - startTime > 15000){ //図形トレース終了
+      if(countTrace == 5 || timeNow_G - traceTime >100000) mode_G = 105; //全ての図形をトレースし終わるか時間切れだったら(100秒)
+      else mode_G = 101; //まだトレースしきってなかったら図形探しを続行
+    }
+    if(color == 'K'){ //黒色の時
+      startTime = timeNow_G;
+      mode_G = 103; //回転の戻る
+    }
+    break;
+  case 105: //黒線見つかるまで直進
+    motorL_G = 150;
+    motorR_G = 150; //直進
+    color = identify_RGB();
+    if(color == 'K'){
+      startTime = timeNow_G;
+      mode_G = 106;
+    }
+    break;
+  case 106: //向き統一のため少し回転
+    motorL_G = -150;
+    motorR_G = 150;
+    if(timeNow_G - startTime > 300) mode_G = 107;
+    break;
+  case 107: //赤色見つけるまでトレース
+    linetrace_P();
+    color = identify_RGB();
+    if(color == 'R') {
+      startTime = timeNow_G;
+      mode_G = 108; //出口を指す色が見つかったら
+    }
+   break;
+  case 108: //ちょっと直進
+    linetrace_P();
+    if(timeNow_G - startTime >500 ) {
+      startTime = timeNow_G;
+      mode_G = 109; 
+    }
+    break;
+  case 109:
+    motorL_G = 150;
+    motorR_G = -150;
+    if(timeNow_G - startTime > 500){ //45度回転
+      startTime = timeNow_G;
+      mode_G = 110;
+    }
+    break;
+  case 110:
+    motorL_G = 150;
+    motorR_G = 150;
+    color = identify_RGB();
+    if(color == LINE_COLOR) {
+      startTime = timeNow_G;
+      mode_G = 111;
+    }
+    else{
+      mode_G = 110; //他の色だったら直進
+    }
+    break;
+  case 111:
+    motorL_G = -150;
+    motorR_G = 150;
+    if(timeNow_G - startTime > 500){
+      mode_G = 1;
+    }
+    break;
   }
 }
 
+/*
 void task_C() {
   static unsigned long startTime; // static変数，時間計測はunsigned long
   char color;
+  static unsigned long traceTime; //トレースしきれなかった時用
   
   switch ( mode_G ) {
   case 0://待機モード
     mode_G = 1;
+    traceTime = timeNow_G;
     break;  // break文を忘れない（忘れるとその下も実行される）
   case 1: //白色まで走る
     motorL_G = 100;
     motorR_G = 100;
     color = identify_RGB();
+    
     if(color == 'W'){
       mode_G = 2;
     }
@@ -233,7 +350,7 @@ void task_C() {
   case 3: //回転用
     motorL_G = 150;
     motorR_G = -150;
-    if(timeNow_G - startTime > 2000){ //1秒回転したら
+    if(timeNow_G - startTime > 1000){ //1秒回転したら
       mode_G = 1; //図形探しに戻る
     }
     break;
@@ -241,7 +358,7 @@ void task_C() {
     linetrace_P3();
     color = identify_RGB();
     if(timeNow_G - startTime > 5000){ //図形トレース終了
-      if(countTrace == 5) mode_G = 5; //全ての図形をトレースし終わったら
+      if(countTrace == 5 || timeNow_G - traceTime >20000) mode_G = 5; //全ての図形をトレースし終わるか時間切れだったら(20秒)
       else mode_G = 1; //まだトレースしきってなかったら図形探しを続行
     }
     if(color == 'K'){ //黒色の時
@@ -249,22 +366,78 @@ void task_C() {
       mode_G = 3; //回転の戻る
     }
     break;
-  case 5:
-    //出る処理
+  case 5: //黒線見つかるまで直進
+    motorL_G = 150;
+    motorR_G = 150; //直進
+    color = identify_RGB();
+    if(color == 'K'){
+      startTime = timeNow_G;
+      mode_G = 6;
+    }
+    break;
+  case 6: //向き統一のため少し回転
+    motorL_G = -150;
+    motorR_G = 150;
+    if(timeNow_G - startTime > 300) mode_G = 7;
+    break;
+  case 7: //赤色見つけるまでトレース
+    linetrace_P();
+    color = identify_RGB();
+    if(color == 'R') {
+      startTime = timeNow_G;
+      mode_G = 8; //出口を指す色が見つかったら
+    }
    break;
+  case 8: //ちょっと直進
+    linetrace_P();
+    if(timeNow_G - startTime >500 ) {
+      startTime = timeNow_G;
+      mode_G = 9; 
+    }
+    break;
+  case 9:
+    motorL_G = 150;
+    motorR_G = -150;
+    if(timeNow_G - startTime > 500){ //45度回転
+      startTime = timeNow_G;
+      mode_G = 10;
+    }
+    break;
+  case 10:
+    motorL_G = 150;
+    motorR_G = 150;
+    color = identify_RGB();
+    if(color == LINE_COLOR) {
+      startTime = timeNow_G;
+      mode_G = 11;
+    }
+    else{
+      mode_G = 10; //他の色だったら直進
+    }
+    break;
+  case 11:
+    motorL_G = -150;
+    motorR_G = 150;
+    if(timeNow_G - startTime > 500){
+      mode_G = 12;
+    }
+    break;
+  case 12:
+    linetrace_P();
+    break;
   }
 }
-
+*/
 // lineの色の推定
 char identify_RGB()
 {
   float alpha = 1.2; // パラメーター
 
-  if ( blue_G > alpha * red_G && blue_G > alpha * green_G ) // ブルー
+  if ( blue_G > alpha * red_G && blue_G > alpha * green_G && blue_G > 30) // ブルー
     return 'B';
-  else if ( red_G > alpha * blue_G && red_G > alpha * green_G ) //レッド
+  else if ( red_G > alpha * blue_G && red_G > alpha * green_G && red_G >30) //レッド
     return 'R';
-  else if ( green_G > alpha * red_G && green_G > alpha * blue_G ) //グリーン
+  else if ( green_G > alpha * red_G && green_G > alpha * blue_G  && green_G > 30) //グリーン
     return 'G';
   else if ( blue_G > alpha * red_G && green_G > alpha * red_G) //シアン
     return 'C';
@@ -292,6 +465,19 @@ int identify_color( int red, int green, int blue )
     return 0;
 }
 
+float turnTo(float dir) {
+  float heading, diff;
+
+  heading = direction_G;
+  if (heading>180) heading -= 360;
+  heading -= dir;
+  if (heading>180) heading -= 360;
+  if (heading<-180) heading += 360;
+  diff = -heading*5;            // P-制御
+  if (diff>200) diff = 200;     // 飽和
+  if (diff<-200) diff = -200;   // 飽和
+  return diff;
+}
 
 int maintainState( unsigned long period )
 {

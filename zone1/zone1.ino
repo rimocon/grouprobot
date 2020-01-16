@@ -7,8 +7,8 @@
 ZumoMotors motors;
 Pushbutton button(ZUMO_BUTTON);
 LSM303 compass;
-
-#define SPEED 70 // Zumoのモータに与える回転力の基準値 
+#define LINE_COLOR 'B'
+#define SPEED 100 // Zumoのモータに与える回転力の基準値 
 #define ZUMO_NUM 1 //+ Zumo番号(1から3までの3台)
 //#define ZUMO_NUM 2 //+ Zumo番号(1から3までの3台)
 //#define ZUMO_NUM 3 //+ Zumo番号(1から3までの3台)
@@ -81,8 +81,8 @@ void loop()
 	timeNow_G = millis() - timeInit_G; // 経過時間
 	if(n_zumo == ZUMO_NUM || sflag == 1){  // zumo番号が一致していたらタスクを行う  乾 追記11.24
 		//avoidance();
-		//task_B(); 
-    task_C();
+		task_B(); 
+    //task_C();
 	}
  if(button.isPressed()){
   sflag = 1;
@@ -140,6 +140,8 @@ void sendData()
 		Serial.write(((int)(motorL_G/2+128))&255); 
 		Serial.write(((int)(motorR_G/2+128))&255);
 		Serial.write(((int)zflag)&255);
+
+
 
 		timePrev = timeNow_G;
 	}
