@@ -117,8 +117,32 @@ float averageHeadingLP()
   compass.read();
   avg.x = 0.2 * compass.m.x + 0.8 * avg.x;
   avg.y = 0.2 * compass.m.y + 0.8 * avg.y ;
-
+  cal_velocity(ax, ay); //速度を求める関数
 
   // avg is the average measure of the magnetic vector.
   return heading(avg);
+}
+
+void cal_velocity(float ax, float ay){
+  double take_time = micros() - timer_vel; //前の実行からの経過時間
+  double dt = (double)(take_time) / 1000000; // Calculate delta time
+  timer_vel = micros();
+
+  // 重力加速度を求める
+  gravityX = gamma * gravityX + (1 - gamma) * ax;
+  gravityY = gamma * gravityY + (1 - gamma) * ay;
+
+  // 補正した加速度
+  comAccX = ax - gravityX;
+  comAccY = ay - gravityY;
+
+  if(abs(comAccX) < 100)comAccX = 0;
+  if(abs(comAccY) < 100)comAccY = 0;
+
+  velX = velX + comAccX * dt; //速度(x軸)
+  velY = velY + comAccY * dt; //速度(y軸)
+
+  v = velX + velY; //速度(x軸とy軸が合成された速度)
+
+  d = v * take_time; //移動距離の計算
 }

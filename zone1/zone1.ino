@@ -42,6 +42,22 @@ int countCross;
 int countTrace; //何回トレースしたか
 char tracecolor[6] = {'A','A','A','A','A','A'} ; //トレースした色を格納するための変数,Aで初期化
 bool flag_samecolor; //トレース済みかどうかのフラグ
+float global_direction_G; //現在の角度
+int drawing_flag;
+int high,low;
+
+//速度を求めるための変数を宣言
+double velX, velY = 0;
+double comVelX, comVelY = 0;
+
+double comAccX,comAccY = 0;  
+double gravityX, gravityY = 0;
+
+const double gamma = 0.8;//lowpassfilter
+uint32_t timer_vel;
+double v = 0; //x-y軸の合成速度
+double d = 0; //移動距離
+
 void setup()
 {
 	Serial.begin(9600);
@@ -70,6 +86,12 @@ void setup()
   //追加部分
   countTrace = 0;
   flag_samecolor = false;
+  drawing_flag = 0;
+  global_direction_G = averageHeadingLP();
+}
+
+void global_direction_G_func(){
+  global_direction_G = averageHeadingLP();
 }
 
 void loop()
@@ -82,14 +104,15 @@ void loop()
 	if(n_zumo == ZUMO_NUM || sflag == 1){  // zumo番号が一致していたらタスクを行う  乾 追記11.24
 		//avoidance();
 		task_B(); 
-    //task_C();
+    global_direction_G_func();
 	}
  if(button.isPressed()){
   sflag = 1;
  }
 	
-		 motors.setSpeeds(motorL_G, motorR_G); // 左右モーターへの回転力入力
+	motors.setSpeeds(motorL_G, motorR_G); // 左右モーターへの回転力入力
 	//delay(10);
+  /*/ //いらなそう
 	ax = compass.a.x;  ay = compass.a.y;  az = compass.a.z;
 	ax = map(ax,-32768,32768,-128,127);
 	ay = map(ay,-32768,32768,-128,127);
@@ -102,7 +125,7 @@ void loop()
 	mx = map(mx,compass.m_min.x,compass.m_max.x,-128,127);
 	my = map(my,compass.m_min.y,compass.m_max.y,-128,127);
 	mz = map(mz,compass.m_min.z,compass.m_max.z,-128,127); 
-	 
+	*///
 	sendData(); // データ送信
 }
 
@@ -141,6 +164,13 @@ void sendData()
 		Serial.write(((int)(motorR_G/2+128))&255);
 		Serial.write(((int)zflag)&255);
 
+    high =  ((int)global_direction_G) >> 8;
+    low  = ((int)global_direction_G) & 255;
+    Serial.write(high); //現在の角度(グローバル座標を基準)
+    Serial.write(low); //現在の角度(グローバル座標を基準)
+    //Serial.write((int)global_direction_G); //現在の角度(グローバル座標を基準)
+    Serial.write((int)d); //移動距離
+    Serial.write(drawing_flag); //図形を描画中かどうかを示す．
 
 
 		timePrev = timeNow_G;
