@@ -44,6 +44,14 @@ PImage img;  // マップ画像
 int posx, posy;
 int n;
 
+////zone1
+
+int fig_drawing_flag; //図形を描画中かどうかを示す．
+float global_direction_G; //現在の角度(度，グローバル座標を基準)
+float global_direction_G_radian; //現在の角度(ラジアン，グローバル座標を基準)
+float distance; 
+float old_x, old_y, now_x, now_y = 0; //トレースした図形の描画用
+
 int dec=0,dip=0; // 視点変更用（偏角・伏角）
 int dec_i=0,dec_d=0,dip_i=0,dip_d=0; // 長押し処理用
 
@@ -68,7 +76,7 @@ void setup() {
      mx[i] = 0; my[i] = 0; mz[i] = 0;
      direction[i] = 0; avex[i] = 0;
    }
-   
+   fig_drawing_flag = 0;
    //port1 = new Serial(this, "/dev/ttyUSB0", 9600); //Serial クラスのインスタンスを生成
    //port1.clear();
    //port1.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
@@ -78,6 +86,25 @@ void setup() {
    //port3 = new Serial(this, "/dev/ttyUSB2", 9600); //Serial クラスのインスタンスを生成
    //port3.clear();
    //port3.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
+}
+
+void drawZone1() {
+  distance = distance*0.04;
+
+  now_x = old_x + distance * cos(global_direction_G_radian);
+  now_y = old_y + distance * sin(global_direction_G_radian); //y座標を反転させるのは，描画の時にする
+
+  strokeWeight(10); //点の大きさは10ピクセル
+  stroke(0, 255, 0); //点の色は緑
+  point(old_x + width*1/5, -1 * old_y + height/2);  //1つ前の座標
+  stroke(255, 0, 0); //点の色は赤
+  point(now_x + width*1/5, -1 * now_y +  height/2); //数学の座標とはy方向が反対になる
+  strokeWeight(5); //線の太さは5ピクセル
+  stroke(255); //ラインの色は黒
+  line(now_x + width*1/5, -1 * now_y +  height/2, old_x + width*1/5, -1 * old_y +  height/2); //線を引く
+  stroke(255); //ラインの色は黒
+  old_x = now_x;
+  old_y = now_y;
 }
 
 void drawZone2(){
@@ -259,6 +286,12 @@ void draw() {
     //ゾーン2描画
     background(255);
     drawZone2();
+  }else if(mode_G[2] > 0 && mode_G[2] < 120){
+    
+    //////zone1/////
+    background(255);
+    drawZone1();
+    
   }else{
    // コースを回っているときの描画
     background(255);
