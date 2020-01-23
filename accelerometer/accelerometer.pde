@@ -50,8 +50,10 @@ void setup() {
      motorR_G[i] = 0; motorL_G[i] = 0;
    }
    
-   port1 = new Serial(this, "/dev/ttyUSB0", 9600); //Serial クラスのインスタンスを生成
-   port1.clear();
+   //port1 = new Serial(this, "/dev/ttyUSB0", 9600); //Serial クラスのインスタンスを生成
+   //port1.clear();
+     port1 = new Serial(this, "/dev/cu.usbserial-A90177EP",9600);
+     port1.clear();
    //port1.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
    //port2 = new Serial(this, "/dev/ttyUSB1", 9600); //Serial クラスのインスタンスを生成
    //port2.clear();
@@ -186,20 +188,21 @@ void drawText(){
   else if(mode_G[0] == 4) text("Zone1",width/6,200);
   
   if(zflag[0] == 1) text("END",width/6,250);
-  /*
+  
   textAlign(LEFT,TOP); 
-  fill(255,0,0); text("Red    :"+countR[0],width/6-100,300);
-  fill(0,255,0); text("Green :"+countG[0],width/6-100,350);
-  fill(0,0,255); text("Blue   :"+countB[0],width/6-100,400);
+  fill(255,0,0); text("Red    :"+red_G[0],width/6-100,300);
+  fill(0,255,0); text("Green :"+green_G[0],width/6-100,350);
+  fill(0,0,255); text("Blue   :"+blue_G[0],width/6-100,400);
   textAlign(CENTER,TOP); // 中央揃え
-  */
+  
+  /*
   text("ax :"+ax,width/6-100,300);
   text("ay :"+ay,width/6-100,350);
   text("az :"+az,width/6-100,400);
   text("mx :"+mx,width/6+75,300);
   text("my :"+my,width/6+75,350);
   text("mz :"+mz,width/6+75,400);
-  
+  */
   //Zumo2
   translate(width/3,0);  //座標軸を移動
   noFill(); rect(0,0,width/3,height-height_g); //黒枠の描画

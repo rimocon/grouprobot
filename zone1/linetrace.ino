@@ -228,7 +228,7 @@ void task_B(){
   case 104: //図形トレース
     linetrace_P3();
     color = identify_RGB();
-    if(timeNow_G - startTime > 15000){ //図形トレース終了
+    if(timeNow_G - startTime > 1iいし5000){ //図形トレース終了
       if(countTrace == 5 || timeNow_G - traceTime >100000) mode_G = 105; //全ての図形をトレースし終わるか時間切れだったら(100秒)
       else mode_G = 101; //まだトレースしきってなかったら図形探しを続行
     }
