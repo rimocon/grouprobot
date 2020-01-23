@@ -145,4 +145,5 @@ void cal_velocity(float ax, float ay){
   v = velX + velY; //速度(x軸とy軸が合成された速度)
 
   d = v * take_time; //移動距離の計算
+  Serial.println(d);
 }

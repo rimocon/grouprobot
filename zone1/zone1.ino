@@ -9,9 +9,9 @@ Pushbutton button(ZUMO_BUTTON);
 LSM303 compass;
 #define LINE_COLOR 'B'
 #define SPEED 100 // Zumoのモータに与える回転力の基準値 
-#define ZUMO_NUM 1 //+ Zumo番号(1から3までの3台)
+//#define ZUMO_NUM 1 //+ Zumo番号(1から3までの3台)
 //#define ZUMO_NUM 2 //+ Zumo番号(1から3までの3台)
-//#define ZUMO_NUM 3 //+ Zumo番号(1から3までの3台)
+#define ZUMO_NUM 3 //+ Zumo番号(1から3までの3台)
 
 //超音波センサ
 const int trig = 2;     //TrigピンをArduinoの2番ピンに
@@ -77,6 +77,7 @@ void setup()
 	mode_G = 0;
 	zflag = 0;
 	n_zumo = 0;
+ 
 	//button.waitForButton();
 	timeInit_G = millis();
 	motorR_G = 0;
@@ -88,6 +89,7 @@ void setup()
   flag_samecolor = false;
   drawing_flag = 0;
   global_direction_G = averageHeadingLP();
+  timer_vel = micros();
 }
 
 void global_direction_G_func(){
@@ -102,16 +104,15 @@ void loop()
 	 
 	timeNow_G = millis() - timeInit_G; // 経過時間
 	if(n_zumo == ZUMO_NUM || sflag == 1){  // zumo番号が一致していたらタスクを行う  乾 追記11.24
-		//avoidance();
 		task_B(); 
     global_direction_G_func();
 	}
+ 
  if(button.isPressed()){
   sflag = 1;
  }
 	
 	motors.setSpeeds(motorL_G, motorR_G); // 左右モーターへの回転力入力
-	//delay(10);
   /*/ //いらなそう
 	ax = compass.a.x;  ay = compass.a.y;  az = compass.a.z;
 	ax = map(ax,-32768,32768,-128,127);
@@ -146,8 +147,8 @@ void sendData()
 		Serial.write(((int)red_G)&255);
 		Serial.write(((int)green_G)&255);
 		Serial.write(((int)blue_G)&255);
-
-		
+    Serial.write(((int)countCross)&255);
+		/*
 		Serial.write(((int)(ax+128))&255);
 		Serial.write(((int)(ay+128))&255);
 		Serial.write(((int)(az+128))&255);
@@ -155,7 +156,7 @@ void sendData()
 		Serial.write(((int)(mx+128))&255);
 		Serial.write(((int)(my+128))&255);
 	  Serial.write(((int)(mz+128))&255);
-
+    */
 		Serial.write(((int)countR)&255);
 		Serial.write(((int)countG)&255);
 		Serial.write(((int)countB)&255);
@@ -169,9 +170,8 @@ void sendData()
     Serial.write(high); //現在の角度(グローバル座標を基準)
     Serial.write(low); //現在の角度(グローバル座標を基準)
     //Serial.write((int)global_direction_G); //現在の角度(グローバル座標を基準)
-    Serial.write((int)d); //移動距離
+    Serial.write(((int)d)&255); //移動距離
     Serial.write(drawing_flag); //図形を描画中かどうかを示す．
-
 
 		timePrev = timeNow_G;
 	}

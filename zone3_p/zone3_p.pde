@@ -44,8 +44,7 @@ PImage img;  // マップ画像
 int posx, posy;
 int n;
 
-////zone1
-
+////zone1追加部分
 int high,low;
 int drawing_flag; //図形を描画中かどうかを示す．
 float global_direction_G; //現在の角度(度，グローバル座標を基準)
@@ -79,7 +78,8 @@ void setup() {
    }
    drawing_flag = 0;
    //port1 = new Serial(this, "/dev/ttyUSB0", 9600); //Serial クラスのインスタンスを生成
-   //port1.clear();
+   port3 = new Serial(this,"/dev/cu.usbserial-A90177EP",9600);
+   port3.clear();
    //port1.bufferUntil(0x0d); // LF = 0x0d までバッファ いらなさげ
    //port2 = new Serial(this, "/dev/ttyUSB1", 9600); //Serial クラスのインスタンスを生成
    //port2.clear();
@@ -90,11 +90,11 @@ void setup() {
 }
 
 void drawZone1() {
-  distance = distance*0.04;
-
+  //distance = distance*0.04;
+  
   now_x = old_x + distance * cos(global_direction_G_radian);
   now_y = old_y + distance * sin(global_direction_G_radian); //y座標を反転させるのは，描画の時にする
-
+  
   strokeWeight(10); //点の大きさは10ピクセル
   stroke(0, 255, 0); //点の色は緑
   point(old_x + width*1/5, -1 * old_y + height/2);  //1つ前の座標
@@ -106,6 +106,12 @@ void drawZone1() {
   stroke(255); //ラインの色は黒
   old_x = now_x;
   old_y = now_y;
+  textAlign(CENTER,TOP); // 中央揃え
+  text("mode:"+ mode_G[0],width/6,100);
+  textAlign(LEFT,TOP); 
+  fill(255,0,0); text("Red    :"+red_G[2],width/6-100,300);
+  fill(0,255,0); text("Green :"+green_G[2],width/6-100,350);
+  fill(0,0,255); text("Blue   :"+blue_G[2],width/6-100,400);
   
 }
 
@@ -288,12 +294,13 @@ void draw() {
     //ゾーン2描画
     background(255);
     drawZone2();
-  }else if(mode_G[2] > 0 && mode_G[2] < 120){
-    
-    //////zone1/////
-    background(255);
-    drawZone1();
-    
+  }else if(mode_G[2] > 0 && mode_G[2] < 120 ){
+    if(drawing_flag == 1){
+      drawZone1();
+    }
+    else{
+      background(255);
+    }
   }else{
    // コースを回っているときの描画
     background(255);
@@ -308,7 +315,7 @@ void draw() {
 void serialEvent(Serial p) {
   int a;
 //ロボット１
-  if (p == port1 && p.available() >= 18 && p.read() == 'H') {
+  if (p == port1 && p.available() >= 16 && p.read() == 'H') {
     a = 0;
     mode_G[a] = p.read();
     red_G[a] = p.read();
@@ -320,8 +327,8 @@ void serialEvent(Serial p) {
     countB[a] = p.read();
     motorL_G[a] = 2*(p.read()-128);
     motorR_G[a] = 2*(p.read()-128);
-    direction[a] = p.read();
-    avex[a] = p.read();
+    //direction[a] = p.read();
+    //avex[a] = p.read();
     zflag[a] = p.read();
     
     high = p.read();
@@ -359,7 +366,7 @@ void serialEvent(Serial p) {
   }
   
   //ロボット3
-  if (p == port3 && p.available() >= 14 && p.read() == 'H') {
+  if (p == port3 && p.available() >= 16 && p.read() == 'H') {
     a = 2;
     mode_G[a] = p.read();
     red_G[a] = p.read();
@@ -371,10 +378,27 @@ void serialEvent(Serial p) {
     countB[a] = p.read();
     motorL_G[a] = 2*(p.read()-128);
     motorR_G[a] = 2*(p.read()-128);
-    direction[a] = p.read();
-    avex[a] = p.read();
+    //direction[a] = p.read();
+    //avex[a] = p.read();
     zflag[a] = p.read();
     
+    high = p.read();
+    low = p.read(); 
+    global_direction_G = (high << 8) + low;
+
+    global_direction_G_radian = radians(global_direction_G); //ラジアンに変換
+
+   distance = p.read(); //移動距離
+   distance = 1;
+   drawing_flag = p.read(); //図形を描画中かどうかを示す．
+   /*
+   print("  global_direction_G = ");
+   println(global_direction_G);
+   print("  distance = ");
+   println(distance);
+   print(" drawing_flag = ");
+   println(drawing_flag);
+   */
     p.clear(); //念の為クリア
     port3.write(n_zumo);
   }

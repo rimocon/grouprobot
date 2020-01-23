@@ -10,12 +10,22 @@ void linetrace_P(){
   float speedDiff;
 
   lightNow = (red_G + green_G + blue_G) / 3.0;//赤と緑と青のセンサの値の平均値を取る
+  //青色
   speedDiff = map(lightNow,lightMin,lightMax-20,-speed,speed);
   //speedDiff = map(blue_G,0,255,-speed,speed);
   Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
   
   motorL_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
   motorR_G = speed -Kp*speedDiff -Ki*speedDiff - Kd*(speedDiff - Diff_bef);
+  
+  /*緑
+  speedDiff = map(lightNow,lightMin,lightMax-20,speed,-speed);
+  //speedDiff = map(blue_G,0,255,-speed,speed);
+  Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
+  
+  motorL_G = speed -Kp*speedDiff -Ki*speedDiff - Kd*(speedDiff - Diff_bef);
+  motorR_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
+   */
   Diff_bef = speedDiff; 
 }
 
@@ -35,9 +45,12 @@ void linetrace_P2(){
   //speedDiff = map(blue_G,0,255,-speed,speed);
   Diff_sum += speedDiff;//現在の偏差を偏差の累積値としてみなす
   
-  
+  //青色
   motorL_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
   motorR_G = speed -Kp*speedDiff -Ki*speedDiff - Kd*(speedDiff - Diff_bef);
+  //緑色
+  //motorL_G = speed -Kp*speedDiff -Ki*speedDiff - Kd*(speedDiff - Diff_bef);
+  //motorR_G = speed +Kp*speedDiff +Ki*speedDiff + Kd*(speedDiff - Diff_bef);
   Diff_bef = speedDiff; 
 }
 
@@ -131,7 +144,8 @@ void task_B(){
         countR = 0;
         mode_G = 1;
         if(countZone >= 3){
-          mode_G = 99;
+          startTime = timeNow_G;
+          mode_G = 98; //ちょっとすすむ
         }
       }
       break;
@@ -164,6 +178,13 @@ void task_B(){
       motorR_G = 0;
       if(timeNow_G - startTime > 200){
         avoidance();
+      }
+      break;
+    case 98:
+      motorL_G = 100;
+      motorR_G = 100;
+      if(timeNow_G - startTime > 3000){
+        mode_G = 99;
       }
       break;
     case 99:
@@ -229,9 +250,9 @@ void task_B(){
     drawing_flag = 1;
     linetrace_P3();
     color = identify_RGB();
-    if(timeNow_G - startTime > 15000){ //図形トレース終了
+    if(timeNow_G - startTime > 10000){ //図形トレース終了
       drawing_flag = 0;
-      if(countTrace == 5 || timeNow_G - traceTime >100000) mode_G = 105; //全ての図形をトレースし終わるか時間切れだったら(100秒)
+      if(countTrace == 5 || timeNow_G - 80000) mode_G = 105; //全ての図形をトレースし終わるか時間切れだったら(100秒)
       else mode_G = 101; //まだトレースしきってなかったら図形探しを続行
     }
     if(color == 'K'){ //黒色の時
@@ -297,6 +318,7 @@ void task_B(){
     break;
   }
 }
+
 
 /*
 void task_C() {
